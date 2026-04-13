@@ -1,0 +1,71 @@
+#+title: catchall-box — UUID-based file management for Org mode
+#+author: Fujisawa Electric Management Office
+
+#+begin_quote
+Store files with UUID names, reference them with human-readable Org links.
+#+end_quote
+
+* What is this?
+
+A "catchall box" is a directory where files are stored with UUID-based
+names.  You reference them in Org via links like:
+
+#+begin_example
+[[catchall-box:a1b2c3d4-e5f6-7890-abcd-ef1234567890.pdf][My Report.pdf]]
+#+end_example
+
+This decouples file identity (UUID, never changes) from display name
+(link description, freely editable).
+
+* Features
+
+| Feature | Command |
+|---------+---------|
+| Store file → box + insert link | =catchall-box-store-file= |
+| Store webpage → box as HTML | =catchall-box-store-url= |
+| Batch rename files → UUIDs | =rename-files-to-uuid-and-insert-catchall-links= |
+| Revert UUIDs → original names | =revert-filenames-from-catchall-links= |
+| Delete file at point | =catchall-box-delete-file-at-point= |
+| Find orphaned files | =catchall-box-orphan-files= |
+| Export subtree as folder | =catchall-box-export-subtree= |
+| Import folder → headings + UUIDs | =catchall-box-import-directory= |
+| Copy file with readable name | =catchall-box-copy-file-at-point= |
+
+* Platform support
+
+| Platform | OneDrive auto-detect |
+|----------+---------------------|
+| Windows  | Registry lookup     |
+| WSL      | Registry via /proc  |
+| macOS    | ~/Library/CloudStorage |
+| Linux    | ~/OneDrive fallback |
+
+* Requirements
+
+- Emacs 27.1+
+- org-mode (built-in)
+
+* Installation
+
+#+begin_src emacs-lisp
+(straight-use-package
+ '(catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+* Quick start
+
+#+begin_src emacs-lisp
+(require 'catchall-box)
+
+;; Optional: auto-detect OneDrive
+(setq catchall-box-onedrive-auto-detect t)
+(catchall-box-auto-configure)
+
+;; Or set directory manually
+(setq catchall-box-directory "~/Documents/Catchall-Box")
+(catchall-box-update-link-abbrev)
+#+end_src
+
+* License
+
+GPL-3.0
