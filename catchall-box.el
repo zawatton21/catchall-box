@@ -21,9 +21,9 @@
 ;;
 ;; 1. Adjust `catchall-box-directory` as desired (default is `~/Documents`).
 ;; 2. Call `catchall-box-update-link-abbrev` to update `org-link-abbrev-alist`.
-;; 3. Use `M-x rename-files-to-uuid-and-insert-catchall-links` to rename non-UUID
+;; 3. Use `M-x catchall-box-rename-to-uuid` to rename non-UUID
 ;;    files and insert links.
-;; 4. Use `M-x revert-filenames-from-catchall-links` to revert the names back to
+;; 4. Use `M-x catchall-box-revert-filenames` to revert the names back to
 ;;    the originals based on the link descriptions.
 ;;
 ;; For advanced usage, you can set `catchall-box-directory` conditionally depending
@@ -201,7 +201,7 @@ If detection fails, keep the existing `catchall-box-directory` as-is."
   (catchall-box-update-link-abbrev))
 
 ;;;###autoload
-(defun insert-clipboard-as-catchall-link (description)
+(defun catchall-box-insert-clipboard-link (description)
   "Insert a 'catchall-box' link using the current clipboard content.
 Prompts for a DESCRIPTION to use as the link's text."
   (interactive "sEnter link description: ")
@@ -209,7 +209,7 @@ Prompts for a DESCRIPTION to use as the link's text."
     (insert (format "[[catchall-box:%s][%s]]" filename description))))
 
 ;;;###autoload
-(defun rename-files-to-uuid-and-insert-catchall-links ()
+(defun catchall-box-rename-to-uuid ()
   "Recursively rename files in `catchall-box-directory` that are NOT UUID-named.
 Renames them to uppercase UUIDs, then inserts links into the current buffer.
 
@@ -238,7 +238,7 @@ The inserted link format is:
                               new-uuid ext old-fname)))))))))
 
 ;;;###autoload
-(defun revert-filenames-from-catchall-links (start end)
+(defun catchall-box-revert-filenames (start end)
   "Revert UUID-based filenames to their original names using links in the selected region.
 
 Looks for lines of the form:
@@ -792,6 +792,14 @@ produces at point:
                    (mapconcat #'identity failed-dirs "; "))
         (message "Imported %d file(s) from %d folder(s) (all source folders removed)"
                  total (length folders))))))
+
+;; ------------------------------------------------------------
+;; Backward compatibility aliases
+;; ------------------------------------------------------------
+
+(defalias 'insert-clipboard-as-catchall-link #'catchall-box-insert-clipboard-link)
+(defalias 'rename-files-to-uuid-and-insert-catchall-links #'catchall-box-rename-to-uuid)
+(defalias 'revert-filenames-from-catchall-links #'catchall-box-revert-filenames)
 
 (provide 'catchall-box)
 ;;; catchall-box.el ends here
