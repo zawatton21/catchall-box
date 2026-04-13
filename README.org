@@ -5,6 +5,8 @@
 Store files with UUID names, reference them with human-readable Org links.
 #+end_quote
 
+[[https://github.com/sponsors/zawatton21][https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=flat-square]]
+
 * What is this?
 
 A "catchall box" is a directory where files are stored with UUID-based
