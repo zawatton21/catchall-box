@@ -23,8 +23,8 @@ This decouples file identity (UUID, never changes) from display name
 |---------+---------|
 | Store file → box + insert link | =catchall-box-store-file= |
 | Store webpage → box as HTML | =catchall-box-store-url= |
-| Batch rename files → UUIDs | =rename-files-to-uuid-and-insert-catchall-links= |
-| Revert UUIDs → original names | =revert-filenames-from-catchall-links= |
+| Batch rename files → UUIDs | =catchall-box-rename-to-uuid= |
+| Revert UUIDs → original names | =catchall-box-revert-filenames= |
 | Delete file at point | =catchall-box-delete-file-at-point= |
 | Find orphaned files | =catchall-box-orphan-files= |
 | Export subtree as folder | =catchall-box-export-subtree= |
@@ -47,9 +47,46 @@ This decouples file identity (UUID, never changes) from display name
 
 * Installation
 
+** async-installer
+
+#+begin_src emacs-lisp
+(async-installer-github-add "https://github.com/zawatton21/catchall-box.git"
+                            :branch "master"
+                            :main "catchall-box.el")
+#+end_src
+
+** straight.el
+
 #+begin_src emacs-lisp
 (straight-use-package
  '(catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** elpaca
+
+#+begin_src emacs-lisp
+(elpaca (catchall-box :host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** use-package (with straight or elpaca)
+
+#+begin_src emacs-lisp
+;; with straight
+(use-package catchall-box
+  :straight (catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+
+;; with elpaca
+(use-package catchall-box
+  :ensure (:host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** Manual
+
+Clone this repository and add it to your =load-path=:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/catchall-box")
+(require 'catchall-box)
 #+end_src
 
 * Quick start
