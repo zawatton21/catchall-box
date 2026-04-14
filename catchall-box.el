@@ -34,6 +34,7 @@
 (require 'org-id)
 (require 'rx)
 (require 'subr-x)
+(require 'cl-lib)
 
 (defgroup catchall-box nil
   "Settings for managing a personal catchall-box in Org mode."
@@ -792,6 +793,147 @@ produces at point:
                    (mapconcat #'identity failed-dirs "; "))
         (message "Imported %d file(s) from %d folder(s) (all source folders removed)"
                  total (length folders))))))
+
+;; ------------------------------------------------------------
+;; Inline image display for catchall-box: links
+;; ------------------------------------------------------------
+;;
+;; `org-display-inline-images' (org.el) only inlines links whose
+;; :type is "file" or "attachment".  catchall-box: links keep their
+;; own :type even after `org-link-abbrev-alist' expansion, so we
+;; provide a parallel implementation that scans for catchall-box:
+;; image links and creates overlays the same way Org does.
+
+(defvar-local catchall-box--inline-image-overlays nil
+  "List of overlays for inline images of catchall-box: links in this buffer.")
+
+(defun catchall-box--image-link-regexp ()
+  "Regexp matching a catchall-box: org link.
+Group 1: path component.  Whole match: full bracket link."
+  (rx "[[" "catchall-box:" (group (+ (not (any "]" "\n"))))
+      "]" (? "[" (* (not (any "]" "\n"))) "]") "]"))
+
+(defun catchall-box-remove-inline-images (&optional beg end)
+  "Remove catchall-box inline image overlays between BEG and END.
+With no arguments, clear the whole buffer."
+  (interactive)
+  (let ((b (or beg (point-min)))
+        (e (or end (point-max)))
+        keep)
+    (dolist (ov catchall-box--inline-image-overlays)
+      (cond
+       ((not (overlay-buffer ov)) nil)
+       ((and (>= (overlay-start ov) b)
+             (<= (overlay-end ov) e))
+        (delete-overlay ov))
+       (t (push ov keep))))
+    (setq catchall-box--inline-image-overlays (nreverse keep))))
+
+;;;###autoload
+(defun catchall-box-display-inline-images (&optional refresh beg end)
+  "Display inline images for catchall-box: links between BEG and END.
+With prefix REFRESH non-nil, recreate existing overlays."
+  (interactive "P")
+  (when (display-graphic-p)
+    (when refresh
+      (catchall-box-remove-inline-images beg end)
+      (when (fboundp 'clear-image-cache) (clear-image-cache)))
+    (let ((file-extension-re (image-file-name-regexp))
+          (re (catchall-box--image-link-regexp))
+          (b  (or beg (point-min)))
+          (e  (or end (point-max))))
+      (save-excursion
+        (goto-char b)
+        (while (re-search-forward re e t)
+          (let* ((path     (match-string-no-properties 1))
+                 (link-beg (match-beginning 0))
+                 (link-end (match-end 0))
+                 (file     (expand-file-name path catchall-box-directory)))
+            (when (and (string-match-p file-extension-re path)
+                       (file-readable-p file)
+                       ;; Don't double-overlay if already displayed
+                       (not (cl-some
+                             (lambda (ov)
+                               (and (overlay-buffer ov)
+                                    (= (overlay-start ov) link-beg)))
+                             catchall-box--inline-image-overlays)))
+              (let* ((width (when (fboundp 'org-display-inline-image--width)
+                              (let ((link (save-excursion
+                                            (goto-char link-beg)
+                                            (org-element-context))))
+                                (ignore-errors
+                                  (org-display-inline-image--width link)))))
+                     (image (if (fboundp 'org--create-inline-image)
+                                (org--create-inline-image file width)
+                              (create-image file nil nil :width width))))
+                (when image
+                  (let ((ov (make-overlay link-beg link-end)))
+                    (image-flush image)
+                    (overlay-put ov 'display image)
+                    (overlay-put ov 'face 'default)
+                    (overlay-put ov 'org-image-overlay t)
+                    (overlay-put ov 'catchall-box-image t)
+                    (overlay-put ov 'modification-hooks
+                                 (list 'org-display-inline-remove-overlay))
+                    (when (boundp 'image-map)
+                      (overlay-put ov 'keymap image-map))
+                    (push ov catchall-box--inline-image-overlays)))))))))))
+
+;;;###autoload
+(defun catchall-box-toggle-inline-images ()
+  "Toggle inline image display for catchall-box: links in current buffer."
+  (interactive)
+  (if catchall-box--inline-image-overlays
+      (progn
+        (catchall-box-remove-inline-images)
+        (message "catchall-box inline images off"))
+    (catchall-box-display-inline-images)
+    (message "catchall-box inline images: %d image(s)"
+             (length catchall-box--inline-image-overlays))))
+
+(defun catchall-box--after-org-display (&optional _include-linked refresh beg end)
+  "Mirror `org-display-inline-images' for catchall-box: links.
+Argument list matches `org-display-inline-images'.  INCLUDE-LINKED is
+ignored because catchall-box: links never appear as plain file paths."
+  (when (derived-mode-p 'org-mode)
+    (catchall-box-display-inline-images refresh beg end)))
+
+(defun catchall-box--after-org-remove (&optional beg end)
+  "Mirror `org-remove-inline-images' for catchall-box: links."
+  (when (derived-mode-p 'org-mode)
+    (catchall-box-remove-inline-images beg end)))
+
+;;;###autoload
+(define-minor-mode catchall-box-image-integration-mode
+  "When enabled, Org's inline image display also covers catchall-box: links.
+
+Advises the lower-level primitives `org-display-inline-images' and
+`org-remove-inline-images', so every entry point stays in sync:
+- =C-c C-x C-v= (`org-toggle-inline-images')
+- =#+STARTUP: inlineimages= (file-open auto display)
+- direct calls with explicit BEG/END for partial refresh
+
+This mode is enabled by default once Org is loaded.  To opt out:
+  (catchall-box-image-integration-mode -1)
+
+This is a global minor mode."
+  :global t
+  :init-value t
+  :group 'catchall-box
+  (cond
+   (catchall-box-image-integration-mode
+    (advice-add 'org-display-inline-images :after #'catchall-box--after-org-display)
+    (advice-add 'org-remove-inline-images  :after #'catchall-box--after-org-remove))
+   (t
+    (advice-remove 'org-display-inline-images #'catchall-box--after-org-display)
+    (advice-remove 'org-remove-inline-images  #'catchall-box--after-org-remove))))
+
+;; Auto-activate on `org' load (hook-equivalent for advice setup).
+;; `:init-value t' alone does not run the mode body; this ensures the
+;; advice is actually installed once `org' is available.
+(with-eval-after-load 'org
+  (when catchall-box-image-integration-mode
+    (catchall-box-image-integration-mode 1)))
 
 ;; ------------------------------------------------------------
 ;; Backward compatibility aliases
