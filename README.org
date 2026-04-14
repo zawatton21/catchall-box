@@ -1,46 +1,126 @@
 #+title: catchall-box — UUID-based file management for Org mode
 #+author: Fujisawa Electric Management Office
 
+*Languages:* English / [[file:README.ja.org][日本語]]
+
 #+begin_quote
-Store files with UUID names, reference them with human-readable Org links.
+Stop filing.  Start linking.  Let your notes — not folder trees —
+remember where everything is.
 #+end_quote
 
 #+html: <a href="https://github.com/sponsors/zawatton21"><img src="https://img.shields.io/badge/Sponsor_%E2%9D%A4_Support_this_project-pink?style=for-the-badge" alt="Sponsor"></a>
 
-* What is this?
+* Philosophy: a brain-shaped file system
 
-A "catchall box" is a directory where files are stored with UUID-based
-names.  You reference them in Org via links like:
+Folder hierarchies quietly steal hours from every working week.  We
+spend that time asking the same question over and over:
+
+#+begin_quote
+/Where did I save that file again?/
+#+end_quote
+
+Multiplied across a career, the cumulative loss is enormous.  The cost
+isn't just the search itself — it's the up-front decision-making
+("which folder does this *really* belong in?"), the inevitable
+reorganisation when the answer changes, and the broken links and
+duplicate copies that follow.
+
+catchall-box is built on a single conviction:
+
+#+begin_quote
+*Files should not live in trees.  They should live in your notes.*
+#+end_quote
+
+** From hierarchies to associations
+
+Trees force you to commit to one canonical path per file ahead of
+time, and then to remember it.  Brains do not work that way.  Brains
+recall by *association* — by topic, project, person, time, even mood
+— and they reach the same fact from many different starting points.
+
+catchall-box treats =catchall-box-directory= as a *flat bucket of
+UUID-named blobs* and lets the linking happen in Org:
 
 #+begin_example
-[[catchall-box:a1b2c3d4-e5f6-7890-abcd-ef1234567890.pdf][My Report.pdf]]
+[[catchall-box:01949D03-A746-7D22-87CC-50C08B65713A.pdf][6kV CV cable — structure overview]]
 #+end_example
 
-This decouples file identity (UUID, never changes) from display name
-(link description, freely editable).
+- The file's *identity* (UUID) never changes.
+- The file's *meaning to you* (link description, surrounding heading,
+  cross-references) lives in your notes and can evolve freely.
+- Reorganising notes never breaks file links.  Renaming a description
+  never breaks anything either.
+
+I call this a *brain-shaped file system* — a low-friction file layer
+designed around how human memory actually works: low cognitive load,
+high recall.
+
+** Composes with any linked-knowledge tool
+
+catchall-box is the *file plumbing*; it deliberately stays out of the
+note-taking model.  That means it pairs naturally with whichever
+linked-file knowledge system you already love:
+
+| Tool        | Role                              |
+|-------------+-----------------------------------|
+| =org-roam=    | Zettelkasten in Org               |
+| =denote=      | Filename-convention notes         |
+| =vulpea=      | Extended org-roam workflows       |
+| =org-node=    | Fast org subtree navigation       |
+| plain Org   | Journals, agenda, project files   |
+
+Use any of them — or several at once.  catchall-box only cares that
+"the thing the link points to" has a stable, OS-agnostic,
+collision-free identity behind it.
+
+** Concept
+
+#+begin_example
+                ┌──────────────────────────┐
+                │   Your linked notes      │
+                │                          │
+                │   org-roam / denote /    │
+                │   vulpea / org-node /    │
+                │   plain Org files        │
+                │                          │
+                │      ↓ links by ↓        │
+                │     description          │
+                └────────────┬─────────────┘
+                             │
+                             │  catchall-box: UUID.ext
+                             ▼
+            ┌─────────────────────────────────┐
+            │   catchall-box-directory        │
+            │   (flat — no subfolders)        │
+            │                                 │
+            │   01949D03-...-A746.pdf         │
+            │   01949D03-...-7DCB.png         │
+            │   01949D04-...-2C7E.html        │
+            │   …                             │
+            └────────────────┬────────────────┘
+                             │
+                             ▼
+              ☁  cloud-synced (OneDrive / iCloud / …)
+                  follows you across machines
+#+end_example
 
 * Features
 
-| Feature | Command |
-|---------+---------|
-| Store file → box + insert link | =catchall-box-store-file= |
-| Store webpage → box as HTML | =catchall-box-store-url= |
-| Batch rename files → UUIDs | =catchall-box-rename-to-uuid= |
-| Revert UUIDs → original names | =catchall-box-revert-filenames= |
-| Delete file at point | =catchall-box-delete-file-at-point= |
-| Find orphaned files | =catchall-box-orphan-files= |
-| Export subtree as folder | =catchall-box-export-subtree= |
-| Import folder → headings + UUIDs | =catchall-box-import-directory= |
-| Copy file with readable name | =catchall-box-copy-file-at-point= |
-
-* Platform support
-
-| Platform | OneDrive auto-detect |
-|----------+---------------------|
-| Windows  | Registry lookup     |
-| WSL      | Registry via /proc  |
-| macOS    | ~/Library/CloudStorage |
-| Linux    | ~/OneDrive fallback |
+| Feature                            | Command                              |
+|------------------------------------+--------------------------------------|
+| Store file → box + insert link     | =catchall-box-store-file=              |
+| Store webpage → box as HTML        | =catchall-box-store-url=               |
+| Batch rename files → UUIDs         | =catchall-box-rename-to-uuid=          |
+| Revert UUIDs → original names      | =catchall-box-revert-filenames=        |
+| Delete file at point               | =catchall-box-delete-file-at-point=    |
+| Delete files in region             | =catchall-box-delete-files-in-region=  |
+| Find orphaned files                | =catchall-box-orphan-files=            |
+| Export subtree as folder           | =catchall-box-export-subtree=          |
+| Import folder → headings + UUIDs   | =catchall-box-import-directory=        |
+| Copy file with readable name       | =catchall-box-copy-file-at-point=      |
+| Insert link to existing box file   | =catchall-box-make-link=               |
+| Toggle inline image preview        | =catchall-box-toggle-inline-images=    |
+| Mirror =org-toggle-inline-images=    | =catchall-box-image-integration-mode=  |
 
 * Requirements
 
@@ -93,19 +173,262 @@ Clone this repository and add it to your =load-path=:
 (require 'catchall-box)
 #+end_src
 
-* Quick start
+* Configuration
+
+Minimum: tell catchall-box which directory is the box.
+
+#+begin_src emacs-lisp
+(require 'catchall-box)
+(setq catchall-box-directory "~/OneDrive/Catchall-Box")
+(catchall-box-update-link-abbrev)
+#+end_src
+
+** OneDrive auto-detect (recommended for multi-machine setups)
+
+If you keep the box in OneDrive and use multiple machines (Windows /
+WSL / macOS), let the package locate the OneDrive root for you:
 
 #+begin_src emacs-lisp
 (require 'catchall-box)
 
-;; Optional: auto-detect OneDrive
 (setq catchall-box-onedrive-auto-detect t)
-(catchall-box-auto-configure)
+(setq catchall-box-onedrive-subdir      "Catchall-Box")
 
-;; Or set directory manually
-(setq catchall-box-directory "~/Documents/Catchall-Box")
-(catchall-box-update-link-abbrev)
+;; Manual fallback if auto-detect fails
+(setq catchall-box-directory
+      (cond ((eq system-type 'windows-nt) "C:/Users/me/OneDrive/Catchall-Box")
+            ((eq system-type 'darwin)     "~/Library/CloudStorage/OneDrive-Personal/Catchall-Box")
+            (t                            "~/OneDrive/Catchall-Box")))
+
+;; Detect OneDrive root and refresh the link abbrev in one call.
+(catchall-box-auto-configure)
 #+end_src
+
+** Export directory (where shared copies land)
+
+When you export files back into the human world (see *Sharing* below),
+they go to =catchall-box-export-directory= — defaults to your Desktop.
+=catchall-box-auto-configure= sets this for you on Windows / WSL / macOS.
+
+* Usage
+
+The intended workflow is built around two questions:
+
+1. *"Where do I put a new file?"* → Always: into the box, get a UUID,
+   insert a link in your current note.
+2. *"Where did I save that file?"* → You don't care.  Search your
+   notes for the topic / project / context, follow the link.
+
+Concrete recipes follow.
+
+** Recipe 1 — Store a single file from anywhere
+
+The everyday workflow.  With the cursor in *any* Org buffer:
+
+#+begin_src
+M-x catchall-box-store-file        ; (C-c b s)
+#+end_src
+
+Pick a file from the prompt.  catchall-box copies it into
+=catchall-box-directory= with a fresh UUID and inserts a link at point:
+
+#+begin_example
+>> [[catchall-box:01949D03-A746-7D22-87CC-50C08B65713A.pdf][6kV CV cable — structure overview.pdf]]
+#+end_example
+
+The original file (Desktop / Downloads / wherever) is left in place.
+
+** Recipe 2 — Drag-drop several files into the box, then bulk register
+
+When several files are already sitting in =catchall-box-directory=
+under their original (non-UUID) names — e.g., you just dragged them
+out of an email or saved them from a browser:
+
+1. Place the cursor in the Org buffer where you want the links.
+2. =M-x catchall-box-rename-to-uuid=
+
+Every non-UUID file is renamed to a UUID *and* a corresponding link
+line is inserted.  The original filename is preserved as the link's
+description, so the human-readable name is never lost.
+
+** Recipe 3 — Drag-drop a whole folder, preserve hierarchy as headings
+
+Particularly useful for one-shot bulk imports (e.g., a vendor delivers
+documentation as a folder structure).
+
+1. Drop the folder into =catchall-box-directory=.
+2. Cursor in the Org buffer at the level where the structure should
+   appear.
+3. =M-x catchall-box-import-directory=     ; (C-c b i)
+
+Result: sub-folders become sub-headings, files become catchall-box:
+links under their headings, UUIDs are minted, and the source folders
+are removed from the box.
+
+#+begin_example
+;; Catchall-Box/ contains:
+;;   Overcurrent-Relay-OCR/
+;;     Manuals/
+;;       Mitsubishi-MOC-manual.pdf
+;;     Test-Reports/
+;;       factory-test-report.pdf
+;;   Ground-Fault-Relay-DGR/
+;;     test-report.pdf
+
+;; After M-x catchall-box-import-directory at level 2:
+** Overcurrent-Relay-OCR
+*** Manuals
+    >> [[catchall-box:UUID1.pdf][Mitsubishi-MOC-manual.pdf]]
+*** Test-Reports
+    >> [[catchall-box:UUID2.pdf][factory-test-report.pdf]]
+** Ground-Fault-Relay-DGR
+   >> [[catchall-box:UUID3.pdf][test-report.pdf]]
+#+end_example
+
+This is the inverse of =catchall-box-export-subtree= (Recipe 7).
+
+** Recipe 4 — Save a webpage as an article
+
+#+begin_src
+M-x catchall-box-store-url         ; (C-c b u)
+#+end_src
+
+Downloads the page's HTML into the box under a UUID and inserts a link
+using the page =<title>= as description.  Great for clipping references
+into your notes.
+
+** Recipe 5 — Insert a link to a file already in the box
+
+#+begin_src
+M-x catchall-box-make-link         ; (C-c b l)
+#+end_src
+
+Completing-read picks among existing files in the box.  Useful when
+the same file legitimately needs to be referenced from multiple notes.
+
+** Recipe 6 — Share a single file with humans (UUID → readable name)
+
+Inside the box everything is UUIDs — meaningless to colleagues.  When
+you need to send a file out, restore a human-readable name on the way:
+
+With the cursor on a catchall-box: link:
+
+#+begin_src
+M-x catchall-box-copy-file-at-point   ; (C-c b c)
+#+end_src
+
+Result: =UUID.pdf= → =Important-notice-for-power-facility.pdf= in your
+export directory (Desktop by default).  The original UUID file in the
+box is untouched.
+
+** Recipe 7 — Share a whole subtree as a folder hierarchy
+
+For one-shot deliveries — e.g., the entire documentation set for one
+piece of equipment.  With the cursor on a heading:
+
+#+begin_src
+M-x catchall-box-export-subtree    ; (C-c b e)
+#+end_src
+
+Heading hierarchy → folder hierarchy.  Link descriptions → file
+names.  This is the mirror of =catchall-box-import-directory=.
+
+** Recipe 8 — Roll back UUIDs to original filenames
+
+You changed your mind, or want to hand the raw files to someone:
+
+1. Select a region containing catchall-box: links inserted by
+   =catchall-box-rename-to-uuid=.
+2. =M-x catchall-box-revert-filenames=
+
+Each =UUID.ext= file is renamed back to the original name preserved in
+the link description.
+
+** Recipe 9 — Find orphan files (housekeeping)
+
+Files in the box that no Org file links to anywhere:
+
+#+begin_src
+M-x catchall-box-orphan-files      ; (C-c b o)
+#+end_src
+
+Useful for periodic cleanup.  Safe — it only reports; it doesn't
+delete.
+
+** Recipe 10 — Delete a file from the box
+
+These commands remove *both* the link line *and* the underlying UUID
+file (with confirmation):
+
+#+begin_src
+M-x catchall-box-delete-file-at-point      ; (C-c b d)
+M-x catchall-box-delete-files-in-region    ; (C-c b D)
+#+end_src
+
+* Inline image preview (enabled by default)
+
+=catchall-box-image-integration-mode= is *enabled by default* once Org
+is loaded — no init configuration required.  =catchall-box:= images
+stay in sync with Org's native inline image system from every entry
+point:
+
+| Trigger                                          | Behavior                |
+|--------------------------------------------------+-------------------------|
+| =C-c C-x C-v= (=org-toggle-inline-images=)           | toggles both            |
+| =C-u C-c C-x C-v= (refresh)                        | refreshes both          |
+| =#+STARTUP: inlineimages= on file open             | auto-displays both      |
+| =M-x org-display-inline-images=                    | displays both           |
+| =M-x org-remove-inline-images=                     | removes both            |
+| Region-limited calls with explicit =BEG= / =END=     | applies only to region  |
+
+The mode advises the *lower-level primitives* — =org-display-inline-images=
+and =org-remove-inline-images= — rather than the toggle command, which
+is why every entry point (including =#+STARTUP: inlineimages= and direct
+calls) is covered.
+
+Note: Org does not expose an =org-display-inline-images-hook=, so
+=advice-add= is the only available integration mechanism.
+
+** Standalone toggle
+
+If you want a dedicated key just for catchall-box images:
+
+#+begin_src emacs-lisp
+(define-key org-mode-map (kbd "C-c b v") #'catchall-box-toggle-inline-images)
+#+end_src
+
+** Opt-out
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'catchall-box
+  (catchall-box-image-integration-mode -1))
+#+end_src
+
+* Recommended keybindings
+
+A consistent =C-c b= prefix for everything:
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-c b s") #'catchall-box-store-file)             ; store file
+(global-set-key (kbd "C-c b l") #'catchall-box-make-link)              ; insert link
+(global-set-key (kbd "C-c b u") #'catchall-box-store-url)              ; save URL
+(global-set-key (kbd "C-c b d") #'catchall-box-delete-file-at-point)   ; delete file
+(global-set-key (kbd "C-c b D") #'catchall-box-delete-files-in-region) ; bulk delete
+(global-set-key (kbd "C-c b o") #'catchall-box-orphan-files)           ; orphan finder
+(global-set-key (kbd "C-c b e") #'catchall-box-export-subtree)         ; subtree → folder
+(global-set-key (kbd "C-c b i") #'catchall-box-import-directory)       ; folder → subtree
+(global-set-key (kbd "C-c b c") #'catchall-box-copy-file-at-point)     ; share single
+(global-set-key (kbd "C-c b v") #'catchall-box-toggle-inline-images)   ; image toggle
+#+end_src
+
+* Platform support
+
+| Platform | OneDrive auto-detect       |
+|----------+----------------------------|
+| Windows  | Registry lookup            |
+| WSL      | Registry via /mnt/c/...    |
+| macOS    | =~/Library/CloudStorage=     |
+| Linux    | =~/OneDrive= fallback        |
 
 * License
 

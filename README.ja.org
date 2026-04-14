@@ -1,0 +1,432 @@
+#+title: catchall-box — Org mode 用 UUID ファイル管理
+#+author: 藤澤電気管理事務所
+
+*言語:* [[file:README.org][English]] / 日本語
+
+#+begin_quote
+ファイリングをやめよう。リンクで管理しよう。
+どこに何があるかは、フォルダではなく、あなたのノートに覚えさせる。
+#+end_quote
+
+#+html: <a href="https://github.com/sponsors/zawatton21"><img src="https://img.shields.io/badge/Sponsor_%E2%9D%A4_Support_this_project-pink?style=for-the-badge" alt="Sponsor"></a>
+
+* 思想 — 脳型ファイルシステム
+
+フォルダ階層は、私たちの仕事時間を静かに、しかし大量に奪い続けています。
+私たちは毎週同じ問いを何度も繰り返すために、その時間を失っているのです。
+
+#+begin_quote
+「あのファイル、どこに保存したっけ？」
+#+end_quote
+
+キャリア全体で積み重ねれば、失われる時間は膨大です。失っているのは検索時間
+だけではありません。「このファイルは *本当に* どのフォルダに属するのか？」
+という事前判断のコスト、答えが変わったときの再編成コスト、そしてその過程で
+発生する壊れたリンクと重複コピーのコスト。これらすべてを合わせると、
+無視できない量になります。
+
+catchall-box は、たったひとつの確信に基づいて作られています:
+
+#+begin_quote
+*ファイルはツリーに住むべきではない。あなたのノートに住むべきだ。*
+#+end_quote
+
+** 階層から連想へ
+
+ツリー型は、ファイルごとに「正しい場所」を事前に決めて、それを覚えておく
+ことを強います。脳はそういう仕組みでは動いていません。脳は *連想* で
+記憶を引き出します — トピック、プロジェクト、人物、時期、ときには気分。
+そして同じ事実に、いくつもの入口から到達できます。
+
+catchall-box は =catchall-box-directory= を *UUID 名のフラットなファイル
+バケット* として扱い、リンクの仕事はすべて Org 側に任せます:
+
+#+begin_example
+[[catchall-box:01949D03-A746-7D22-87CC-50C08B65713A.pdf][6kV CVケーブルの基本構造]]
+#+end_example
+
+- ファイルの *アイデンティティ* (UUID) は決して変わらない
+- ファイルが *あなたにとって何を意味するか* (リンクの説明文、配置された
+  見出し、相互参照) はノート側で自由に進化できる
+- ノートを再編成してもファイルリンクは壊れない。説明文を書き換えても、
+  ファイルとの結びつきは何も壊れない
+
+これを私は *脳型ファイルシステム (brain-shaped file system)* と呼んで
+います — 人間の記憶の仕組みに合わせた、低摩擦・高想起のファイル層です。
+
+** リンク型ナレッジツールと自由に組み合わせる
+
+catchall-box は *ファイルの配管* に徹し、ノート管理のモデルからは意図的に
+距離を取っています。だからこそ、お好みのリンク型ナレッジシステムと
+そのまま共存できます:
+
+| ツール      | 役割                              |
+|-------------+-----------------------------------|
+| =org-roam=    | Org 上の Zettelkasten             |
+| =denote=      | ファイル名規則ベースのノート       |
+| =vulpea=      | org-roam の拡張ワークフロー       |
+| =org-node=    | Org サブツリーの高速ナビゲーション |
+| 素の Org    | ジャーナル、アジェンダ、案件管理 |
+
+どれを使っても — 複数を併用しても — 構いません。catchall-box が
+保証するのは、「リンクの先にあるもの」が安定した、OS 非依存で、衝突しない
+アイデンティティを持つことだけです。
+
+** 全体図
+
+#+begin_example
+                ┌──────────────────────────┐
+                │  あなたのリンク型ノート   │
+                │                          │
+                │   org-roam / denote /    │
+                │   vulpea / org-node /    │
+                │   素の Org ファイル       │
+                │                          │
+                │     ↓ 説明文を介して ↓    │
+                │       リンクする          │
+                └────────────┬─────────────┘
+                             │
+                             │  catchall-box: UUID.ext
+                             ▼
+            ┌─────────────────────────────────┐
+            │   catchall-box-directory        │
+            │   (フラット — サブフォルダなし) │
+            │                                 │
+            │   01949D03-...-A746.pdf         │
+            │   01949D03-...-7DCB.png         │
+            │   01949D04-...-2C7E.html        │
+            │   …                             │
+            └────────────────┬────────────────┘
+                             │
+                             ▼
+              ☁  クラウド同期 (OneDrive / iCloud / …)
+                  どのマシンからでも同じファイル
+#+end_example
+
+* 機能
+
+| 機能                              | コマンド                              |
+|-----------------------------------+--------------------------------------|
+| ファイルを Box に格納 + リンク挿入 | =catchall-box-store-file=              |
+| Web ページを HTML として保存       | =catchall-box-store-url=               |
+| 一括で UUID にリネーム             | =catchall-box-rename-to-uuid=          |
+| UUID を元のファイル名に復元        | =catchall-box-revert-filenames=        |
+| カーソル位置のファイルを削除       | =catchall-box-delete-file-at-point=    |
+| 領域内のファイルをまとめて削除     | =catchall-box-delete-files-in-region=  |
+| 孤立ファイルの検出                 | =catchall-box-orphan-files=            |
+| サブツリーをフォルダとして書き出し | =catchall-box-export-subtree=          |
+| フォルダを見出し階層として取り込み | =catchall-box-import-directory=        |
+| 読みやすい名前でファイルをコピー   | =catchall-box-copy-file-at-point=      |
+| 既存ファイルへのリンク挿入         | =catchall-box-make-link=               |
+| インライン画像の表示切替           | =catchall-box-toggle-inline-images=    |
+| =org-toggle-inline-images= と同期    | =catchall-box-image-integration-mode=  |
+
+* 動作要件
+
+- Emacs 27.1 以上
+- org-mode (組み込み)
+
+* インストール
+
+** async-installer
+
+[[https://github.com/zawatton21/async-installer][async-installer]] — 純 Elisp 構文で書ける、軽量・非同期な Emacs パッケージ
+マネージャ。マクロ DSL は不要です。
+
+#+begin_src emacs-lisp
+(async-installer-git-add "https://github.com/zawatton21/catchall-box.git"
+                            :branch "master"
+                            :main "catchall-box.el")
+#+end_src
+
+** straight.el
+
+#+begin_src emacs-lisp
+(straight-use-package
+ '(catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** elpaca
+
+#+begin_src emacs-lisp
+(elpaca (catchall-box :host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** use-package (straight または elpaca と組み合わせて)
+
+#+begin_src emacs-lisp
+;; straight 利用時
+(use-package catchall-box
+  :straight (catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+
+;; elpaca 利用時
+(use-package catchall-box
+  :ensure (:host github :repo "zawatton21/catchall-box"))
+#+end_src
+
+** 手動インストール
+
+リポジトリをクローンして =load-path= に追加するだけ:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/catchall-box")
+(require 'catchall-box)
+#+end_src
+
+* 設定
+
+最低限: catchall-box にどのフォルダを Box として使うか教えるだけ。
+
+#+begin_src emacs-lisp
+(require 'catchall-box)
+(setq catchall-box-directory "~/OneDrive/Catchall-Box")
+(catchall-box-update-link-abbrev)
+#+end_src
+
+** OneDrive 自動検出 (複数マシン構成で推奨)
+
+Box を OneDrive に置いていて、Windows / WSL / macOS など複数マシンで
+使う場合は、OneDrive のルートを自動検出させられます:
+
+#+begin_src emacs-lisp
+(require 'catchall-box)
+
+(setq catchall-box-onedrive-auto-detect t)
+(setq catchall-box-onedrive-subdir      "Catchall-Box")
+
+;; 自動検出に失敗した場合の手動フォールバック
+(setq catchall-box-directory
+      (cond ((eq system-type 'windows-nt) "C:/Users/me/OneDrive/Catchall-Box")
+            ((eq system-type 'darwin)     "~/Library/CloudStorage/OneDrive-Personal/Catchall-Box")
+            (t                            "~/OneDrive/Catchall-Box")))
+
+;; OneDrive 検出 + link abbrev 更新を一括で実行
+(catchall-box-auto-configure)
+#+end_src
+
+** 書き出し先フォルダ (人間に渡すコピーの行き先)
+
+第三者へファイルを共有するとき (後述の *共有* レシピ参照)、コピーは
+=catchall-box-export-directory= に出力されます — デフォルトはデスクトップ。
+=catchall-box-auto-configure= が Windows / WSL / macOS で自動設定します。
+
+* 使い方
+
+このパッケージが想定するワークフローは、ふたつの問いを軸に組み立てて
+あります:
+
+1. *「新しいファイルをどこに入れる？」* → 必ず Box へ。UUID をもらって、
+   今書いているノートにリンクを挿入する。
+2. *「あのファイル、どこに保存したっけ？」* → 気にしない。トピック /
+   プロジェクト / 文脈でノートを検索して、リンクを辿る。
+
+具体的なレシピは以下のとおりです。
+
+** レシピ 1 — どこにあるファイルでも、その場で Box に入れる
+
+普段使いのワークフロー。任意の Org バッファでカーソル位置を決めて:
+
+#+begin_src
+M-x catchall-box-store-file        ; (C-c b s)
+#+end_src
+
+プロンプトでファイルを選ぶ。catchall-box が =catchall-box-directory= に
+新しい UUID でコピーし、その場にリンクを挿入します:
+
+#+begin_example
+>> [[catchall-box:01949D03-A746-7D22-87CC-50C08B65713A.pdf][6kV CVケーブルの基本構造.pdf]]
+#+end_example
+
+Desktop / Downloads などにあった元のファイルはそのまま残ります。
+
+** レシピ 2 — フォルダにドラッグ投入したファイルを一括登録
+
+複数のファイルが既に =catchall-box-directory= の中に元のファイル名のまま
+ある状態 — メールから取り出したばかり、ブラウザから保存したばかり、
+などの場合:
+
+1. リンクを挿入したい Org バッファでカーソルを置く。
+2. =M-x catchall-box-rename-to-uuid=
+
+UUID 命名でないすべてのファイルを UUID にリネームし、対応するリンク行を
+それぞれ挿入します。元のファイル名はリンクの説明文として保持されるので、
+人間可読な名前は失われません。
+
+** レシピ 3 — フォルダ階層ごと投入し、見出し階層として取り込む
+
+特に一度きりの一括取り込みで威力を発揮します (例: ベンダーから機器資料
+一式をフォルダ構造で受け取った)。
+
+1. フォルダを =catchall-box-directory= に投入。
+2. Org バッファで、構造を挿入したい階層にカーソル。
+3. =M-x catchall-box-import-directory=     ; (C-c b i)
+
+サブフォルダは見出し下位に、ファイルは catchall-box: リンクとしてその下に
+配置され、UUID が付与され、元のフォルダは Box から削除されます。
+
+#+begin_example
+;; Catchall-Box/ の中身:
+;;   過電流継電器 OCR/
+;;     取扱説明書/
+;;       三菱MOC 取説.pdf
+;;     試験成績書/
+;;       出荷試験成績書.pdf
+;;   地絡方向継電器 DGR/
+;;     試験成績書.pdf
+
+;; level 2 で M-x catchall-box-import-directory を実行すると:
+** 過電流継電器 OCR
+*** 取扱説明書
+    >> [[catchall-box:UUID1.pdf][三菱MOC 取説.pdf]]
+*** 試験成績書
+    >> [[catchall-box:UUID2.pdf][出荷試験成績書.pdf]]
+** 地絡方向継電器 DGR
+   >> [[catchall-box:UUID3.pdf][試験成績書.pdf]]
+#+end_example
+
+これは =catchall-box-export-subtree= (レシピ 7) の逆操作です。
+
+** レシピ 4 — Web ページを記事として保存
+
+#+begin_src
+M-x catchall-box-store-url         ; (C-c b u)
+#+end_src
+
+ページの HTML を Box に UUID でダウンロードし、ページの =<title>= を
+説明文としてリンクを挿入します。参考資料をノートにクリッピングする
+用途に便利。
+
+** レシピ 5 — Box 内の既存ファイルへのリンクを挿入
+
+#+begin_src
+M-x catchall-box-make-link         ; (C-c b l)
+#+end_src
+
+Box 内のファイルを補完入力で選択。同じファイルを複数のノートから正当に
+参照したいときに使います。
+
+** レシピ 6 — 単一ファイルを人間に渡す (UUID → 可読名)
+
+Box の中はすべて UUID — 第三者にとっては意味不明の文字列です。
+ファイルを送り出すときは、人間可読な名前を復元します:
+
+catchall-box: リンク上にカーソルを置いて:
+
+#+begin_src
+M-x catchall-box-copy-file-at-point   ; (C-c b c)
+#+end_src
+
+結果: =UUID.pdf= → =発電設備への重要なお知らせ.pdf= が書き出し先
+(デフォルト: デスクトップ) にコピーされる。Box 内の元ファイル
+(UUID 名) はそのまま残ります。
+
+** レシピ 7 — サブツリーまるごとフォルダ階層として書き出し
+
+一度きりの納品向け — 例: ある機器の文書一式をまとめて。見出し上に
+カーソルを置いて:
+
+#+begin_src
+M-x catchall-box-export-subtree    ; (C-c b e)
+#+end_src
+
+見出し階層 → フォルダ階層、リンクの説明文 → ファイル名。
+=catchall-box-import-directory= の逆操作です。
+
+** レシピ 8 — UUID を元のファイル名に戻す
+
+気が変わった、または生のファイル名で誰かに渡したい場合:
+
+1. =catchall-box-rename-to-uuid= で挿入された catchall-box: リンクが
+   含まれる領域を選択。
+2. =M-x catchall-box-revert-filenames=
+
+各 =UUID.ext= ファイルが、リンク説明文に保持されている元の名前へ
+リネームされます。
+
+** レシピ 9 — 孤立ファイルを見つける (掃除用)
+
+どの Org ファイルからもリンクされていない Box 内のファイル:
+
+#+begin_src
+M-x catchall-box-orphan-files      ; (C-c b o)
+#+end_src
+
+定期掃除に。安全 — 報告するだけで、削除はしません。
+
+** レシピ 10 — Box からファイルを削除
+
+リンク行と Box 内の UUID ファイルを *両方* 削除します (確認あり):
+
+#+begin_src
+M-x catchall-box-delete-file-at-point      ; (C-c b d)
+M-x catchall-box-delete-files-in-region    ; (C-c b D)
+#+end_src
+
+* インライン画像表示 (デフォルト ON)
+
+=catchall-box-image-integration-mode= は Org がロードされた時点で
+*デフォルト有効* — init での明示的な設定は不要です。
+=catchall-box:= 画像リンクは Org 標準のインライン画像表示と、
+あらゆるエントリポイントから同期します:
+
+| トリガー                                          | 挙動                    |
+|---------------------------------------------------+-------------------------|
+| =C-c C-x C-v= (=org-toggle-inline-images=)           | 両方トグル              |
+| =C-u C-c C-x C-v= (リフレッシュ)                   | 両方リフレッシュ        |
+| =#+STARTUP: inlineimages= でファイルを開く          | 両方を自動表示          |
+| =M-x org-display-inline-images=                    | 両方を表示              |
+| =M-x org-remove-inline-images=                     | 両方を削除              |
+| 領域指定 (=BEG= / =END=) の呼び出し                    | その領域だけ反映         |
+
+このモードはトグルコマンドではなく *下位プリミティブ*
+(=org-display-inline-images= と =org-remove-inline-images=) を advice する
+ため、=#+STARTUP: inlineimages= や直接呼び出しを含むすべてのエントリ
+ポイントでカバーされます。
+
+注: Org は =org-display-inline-images-hook= を公開していないため、
+=advice-add= が唯一の介入手段です。
+
+** 単独トグル
+
+catchall-box 画像だけを別キーで操作したい場合:
+
+#+begin_src emacs-lisp
+(define-key org-mode-map (kbd "C-c b v") #'catchall-box-toggle-inline-images)
+#+end_src
+
+** Opt-out
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'catchall-box
+  (catchall-box-image-integration-mode -1))
+#+end_src
+
+* 推奨キーバインド
+
+統一感のある =C-c b= プレフィクスでまとめます:
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-c b s") #'catchall-box-store-file)             ; ファイル格納
+(global-set-key (kbd "C-c b l") #'catchall-box-make-link)              ; リンク挿入
+(global-set-key (kbd "C-c b u") #'catchall-box-store-url)              ; URL 保存
+(global-set-key (kbd "C-c b d") #'catchall-box-delete-file-at-point)   ; 単一削除
+(global-set-key (kbd "C-c b D") #'catchall-box-delete-files-in-region) ; 一括削除
+(global-set-key (kbd "C-c b o") #'catchall-box-orphan-files)           ; 孤立検出
+(global-set-key (kbd "C-c b e") #'catchall-box-export-subtree)         ; サブツリー → フォルダ
+(global-set-key (kbd "C-c b i") #'catchall-box-import-directory)       ; フォルダ → サブツリー
+(global-set-key (kbd "C-c b c") #'catchall-box-copy-file-at-point)     ; 単一共有
+(global-set-key (kbd "C-c b v") #'catchall-box-toggle-inline-images)   ; 画像トグル
+#+end_src
+
+* プラットフォーム対応
+
+| プラットフォーム | OneDrive 自動検出           |
+|------------------+----------------------------|
+| Windows          | レジストリ参照              |
+| WSL              | =/mnt/c/...= 経由のレジストリ |
+| macOS            | =~/Library/CloudStorage=     |
+| Linux            | =~/OneDrive= フォールバック  |
+
+* ライセンス
+
+GPL-3.0
