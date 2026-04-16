@@ -1,7 +1,7 @@
 ;;; catchall-box.el --- UUID-based file management for Org mode -*- lexical-binding: t; -*-
 
 ;; Author: Fujisawa Electric Management Office
-;; URL: https://github.com/zawatton21/catchall-box
+;; URL: https://github.com/zawatton/catchall-box
 ;; Version: 0.1.0
 ;; Keywords: org, files, convenience
 ;; Package-Requires: ((emacs "27.1")) --- A utility for managing a catchall-box directory in Org mode  -*- lexical-binding: t; -*-

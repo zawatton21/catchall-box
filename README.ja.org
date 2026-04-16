@@ -8,7 +8,7 @@
 どこに何があるかは、フォルダではなく、あなたのノートに覚えさせる。
 #+end_quote
 
-#+html: <a href="https://github.com/sponsors/zawatton21"><img src="https://img.shields.io/badge/Sponsor_%E2%9D%A4_Support_this_project-pink?style=for-the-badge" alt="Sponsor"></a>
+#+html: <a href="https://github.com/sponsors/zawatton"><img src="https://img.shields.io/badge/Sponsor_%E2%9D%A4_Support_this_project-pink?style=for-the-badge" alt="Sponsor"></a>
 
 * 思想 — 脳型ファイルシステム
 
@@ -130,11 +130,11 @@ catchall-box は *ファイルの配管* に徹し、ノート管理のモデル
 
 ** async-installer
 
-[[https://github.com/zawatton21/async-installer][async-installer]] — 純 Elisp 構文で書ける、軽量・非同期な Emacs パッケージ
+[[https://github.com/zawatton/async-installer][async-installer]] — 純 Elisp 構文で書ける、軽量・非同期な Emacs パッケージ
 マネージャ。マクロ DSL は不要です。
 
 #+begin_src emacs-lisp
-(async-installer-git-add "https://github.com/zawatton21/catchall-box.git"
+(async-installer-git-add "https://github.com/zawatton/catchall-box.git"
                             :branch "master"
                             :main "catchall-box.el")
 #+end_src
@@ -143,13 +143,13 @@ catchall-box は *ファイルの配管* に徹し、ノート管理のモデル
 
 #+begin_src emacs-lisp
 (straight-use-package
- '(catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+ '(catchall-box :type git :host github :repo "zawatton/catchall-box"))
 #+end_src
 
 ** elpaca
 
 #+begin_src emacs-lisp
-(elpaca (catchall-box :host github :repo "zawatton21/catchall-box"))
+(elpaca (catchall-box :host github :repo "zawatton/catchall-box"))
 #+end_src
 
 ** use-package (straight または elpaca と組み合わせて)
@@ -157,11 +157,11 @@ catchall-box は *ファイルの配管* に徹し、ノート管理のモデル
 #+begin_src emacs-lisp
 ;; straight 利用時
 (use-package catchall-box
-  :straight (catchall-box :type git :host github :repo "zawatton21/catchall-box"))
+  :straight (catchall-box :type git :host github :repo "zawatton/catchall-box"))
 
 ;; elpaca 利用時
 (use-package catchall-box
-  :ensure (:host github :repo "zawatton21/catchall-box"))
+  :ensure (:host github :repo "zawatton/catchall-box"))
 #+end_src
 
 ** 手動インストール
